@@ -384,18 +384,29 @@ class TrainingTest(absltest.TestCase):
         tl.L2Loss(),
         optimizers.SGD(.01)
     )
-    eval_task = training.EvalTask(
+    eval_task_name_1 = 'eval_1'
+    eval_task_1 = training.EvalTask(
         _very_simple_data(),  # deliberately re-using training data
         [tl.L2Loss()],
+        name=eval_task_name_1,
+    )
+    eval_task_name_2 = 'eval_2'
+    eval_task_2 = training.EvalTask(
+        _very_simple_data(),  # deliberately re-using training data
+        [tl.L2Loss()],
+        name=eval_task_name_2,
     )
     training_session = training.Loop(
         model,
         tasks=(task,),
-        eval_tasks=(eval_task, eval_task),
+        eval_tasks=(eval_task_1, eval_task_2),
     )
     self.assertEqual(0, training_session.step)
     training_session.run(n_steps=5)
     self.assertEqual(5, training_session.step)
+    eval_tasks_names = [task.name for task in training_session.eval_tasks]
+    self.assertCountEqual([eval_task_name_1, eval_task_name_2],
+                          eval_tasks_names)
 
   def test_can_predict_with_trained_model(self):
     model = tl.Serial(tl.Dense(3), tl.Branch(tl.Dense(1), tl.Dense(2)))
